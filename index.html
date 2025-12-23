@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="We propose a model-agnostic probing framework to quantify how much 3D structure and ego-motion video foundation models encode, using shallow feedforward readouts for point maps, depth, and camera poses.">
+  <meta name="keywords" content="Video Foundation Models, VidFM, 3D awareness, probing, video diffusion, 3D reconstruction, depth, camera pose, point map">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How Much 3D Do Video Foundation Models Encode?</title>
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PYVRSFMDRL"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-PYVRSFMDRL');
+  </script>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+
+  <!-- Favicon -->
+  <link rel="apple-touch-icon" sizes="57x57" href="fav/apple-icon-57x57.png">
+  <link rel="apple-touch-icon" sizes="60x60" href="fav/apple-icon-60x60.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="fav/apple-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="fav/apple-icon-76x76.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="fav/apple-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="fav/apple-icon-120x120.png">
+  <link rel="apple-touch-icon" sizes="144x144" href="fav/apple-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="fav/apple-icon-152x152.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="fav/apple-icon-180x180.png">
+  <link rel="icon" type="image/png" sizes="192x192"  href="fav/android-icon-192x192.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="fav/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="fav/favicon-96x96.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="fav/favicon-16x16.png">
+  <link rel="manifest" href="fav/manifest.json">
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="msapplication-TileImage" content="fav/ms-icon-144x144.png">
+  <meta name="theme-color" content="#ffffff">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+</head>
+
+<body>
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-2 publication-title">How Much 3D Do Video Foundation Models Encode?</h1>
+
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">
+              <a href="https://zixuanh.com">Zixuan Huang</a><sup>1*</sup>,</span>
+            <span class="author-block">
+              <a href="https://ryanxli.github.io">Xiang Li</a><sup>1*</sup>,</span>
+            <span class="author-block">
+              <a href="https://lvzhaoyang.github.io/">Zhaoyang Lv</a><sup>2</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://rehg.org">James M. Rehg</a><sup>1</sup>
+            </span>
+          </div>
+
+          <div class="is-size-5 publication-authors">
+            <span class="author-block"><sup>1&nbsp;</sup>University of Illinois at Urbana-Champaign</span>
+            <span>&nbsp;&nbsp;&nbsp;&nbsp;</span>
+            <span class="author-block"><sup>2&nbsp;</sup>Impossible, Inc.</span>
+          </div>
+
+          <div class="is-size-6 publication-authors" style="margin-top: 0.5em;">
+            <span class="author-block"><sup>*</sup>Equal contribution</span>
+          </div>
+
+          <div class="column has-text-centered" style="margin-top: 1rem;">
+            <div class="publication-links">
+
+              <!-- Paper PDF -->
+              <span class="link-block">
+                <a href="./static/assets/vidfm_3d_probe.pdf"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon"><i class="ai ai-arxiv"></i></span>
+                  <span>Paper</span>
+                </a>
+              </span>
+
+              <span>&nbsp;&nbsp;&nbsp;&nbsp;</span>
+
+              <!-- arXiv
+              <span class="link-block">
+                <a href="#"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon"><i class="ai ai-arxiv"></i></span>
+                  <span>arXiv</span>
+                </a>
+              </span> -->
+
+              <span>&nbsp;&nbsp;&nbsp;&nbsp;</span>
+
+              <!-- Code -->
+              <span class="link-block">
+                <a href="#"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon"><i class="fab fa-github"></i></span>
+                  <span>Code (Coming Soon)</span>
+                </a>
+              </span>
+
+
+              <!-- Project
+              <span class="link-block">
+                <a href="https://vidfm-3d-probe.github.io/"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon"><i class="fas fa-globe"></i></span>
+                  <span>Project Page</span>
+                </a>
+              </span> -->
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- Teaser / TL;DR -->
+<section class="section" style="padding-top: 0rem; margin-top: -1rem;">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+
+      <img src="./static/assets/teaser.png" alt="Teaser figure (3D probing of VidFMs)" style="width: 100%; border-radius: 12px;">
+      <br><br>
+
+      <div class="content has-text-left">
+        <p>
+          <strong>TL;DR:</strong>
+          Videos are continuous 2D projections of 3D worlds. We ask: after training on large-scale video data,
+          do video foundation models (VidFMs) naturally encode global 3D structure and ego-motion?
+          We answer this with a <em>model-agnostic probing framework</em> that reads out
+          <strong>3D point maps</strong>, <strong>depth maps</strong>, and <strong>camera poses</strong>
+          from frozen VidFM features using a lightweight feedforward probe.
+        </p>
+
+        <ul>
+          <li><strong>Probe:</strong> a shallow transformer with alternating attention + 3 readout heads (points, depth, pose).</li>
+          <li><strong>Benchmarked models:</strong> frontier video diffusion models (e.g., WAN2.1, Open-Sora2.0), a self-supervised video model (V-JEPA), and control groups (DINOv2, Fast3R).</li>
+          <li><strong>Key finding:</strong> state-of-the-art video generators develop strong, generalizable 3D understanding, even compared to 3D experts, despite being trained only on 2D video data.</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- Abstract -->
+<section class="section has-background-light" style="padding-top: 0rem; margin-top: 0rem;">
+  <div class="container is-max-desktop">
+    <div class="hero-body has-text-centered">
+      <h2 class="title is-3">Abstract</h2>
+      <div class="content has-text-left">
+        <p>
+          Videos are continuous 2D projections of 3D worlds. After training on large video data, will global 3D understanding naturally emerge? We study this by quantifying the 3D understanding of existing Video Foundation Models (VidFMs) pretrained on vast video data. We propose the first model-agnostic framework that measures the 3D awareness of various VidFMs by estimating multiple 3D properties from their features via shallow read-outs. 
+        </p><p>
+          Our study presents meaningful findings regarding the 3D awareness of VidFMs on multiple axes. In particular, we show that state-of-the-art video generation models exhibit a strong understanding of 3D objects and scenes, despite not being trained on any 3D data. Such understanding can even surpass that of large expert models specifically trained for 3D tasks. Our findings, together with the 3D benchmarking of major VidFMs, provide valuable observations for building scalable 3D models.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- Approach -->
+<section class="section" style="padding-top: 0rem; margin-top: 0rem;">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <h2 class="title is-3 has-text-centered">Approach: Probing 3D Awareness</h2>
+
+      <img src="./static/assets/probe.png" alt="Probe overview (feature extraction + shallow transformer probe)" style="width: 100%; border-radius: 12px;">
+      <br><br>
+
+      <div class="content has-text-left">
+        <p>
+          <strong>Definition (3D awareness):</strong> how well globally consistent 3D structure and ego-motion can be recovered
+          from a VidFM's <em>frozen</em> feature space using a fixed-capacity, feedforward probe (no VidFM fine-tuning, no per-scene optimization).
+        </p>
+
+        <p>
+          <strong>Probe architecture:</strong> We extract per-frame spatial feature maps from a given VidFM.
+          From each clip, we sample <strong>4 frames</strong> (first frame as reference + 3 additional frames).
+          A shallow transformer probe with alternating attention processes these tokens and predicts:
+          (i) dense <strong>3D point maps</strong> in the reference frame coordinate system,
+          (ii) dense <strong>depth maps</strong> at consistent scale across frames,
+          and (iii) relative <strong>camera poses</strong>.
+        </p>
+
+        <p>
+          <strong>Datasets:</strong> CO3Dv2 (object-centric) and DL3DV (large, cluttered scenes).
+          We report point-map error, depth error, and pose AUC.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- Benchmark -->
+<section class="section has-background-light" style="padding-top: 0rem; margin-top: 0rem;">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <h2 class="title is-3 has-text-centered">Benchmark Results</h2>
+
+    <div class="content has-text-left">
+      <p>
+        We compare video diffusion models (<strong>CogVideoX</strong>, <strong>Aether</strong>, <strong>Open-Sora2.0</strong>, <strong>WAN2.1-14B</strong>),
+        a self-supervised video encoder (<strong>V-JEPA</strong>), and two control baselines:
+        <strong>DINOv2</strong> (per-frame image features) and <strong>Fast3R</strong> (native 3D expert).
+        Strong video generators (especially <strong>WAN2.1-14B</strong> and <strong>Open-Sora2.0</strong>) show high 3D awareness.
+      </p>
+    </div>
+
+    <div class="column">
+      <iframe src="radar_vidfm.html" 
+              style="width: 100%; height: 700px; border: none; overflow: hidden;"
+              scrolling="no"
+              title="Unified Evaluation of Single-Image 3D Generation Models">
+      </iframe>
+    </div>
+
+<!-- 
+    <div class="table-container">
+      <table class="table is-striped is-hoverable is-fullwidth">
+        <thead>
+          <tr>
+            <th rowspan="2">Probed Feature</th>
+            <th colspan="4" class="has-text-centered">CO3Dv2</th>
+            <th colspan="4" class="has-text-centered">DL3DV</th>
+          </tr>
+          <tr>
+            <th>Point Err (↓)</th>
+            <th>Depth Err (↓)</th>
+            <th>AUC@5 (↑)</th>
+            <th>AUC@30 (↑)</th>
+            <th>Point Err (↓)</th>
+            <th>Depth Err (↓)</th>
+            <th>AUC@5 (↑)</th>
+            <th>AUC@30 (↑)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>DINOv2</td>
+            <td>0.559</td><td>0.209</td><td>0.051</td><td>0.508</td>
+            <td>2.814</td><td>0.534</td><td>0.013</td><td>0.245</td>
+          </tr>
+          <tr>
+            <td>V-JEPA</td>
+            <td>0.439</td><td>0.214</td><td>0.076</td><td>0.619</td>
+            <td>1.576</td><td>0.613</td><td>0.076</td><td>0.558</td>
+          </tr>
+          <tr>
+            <td>CogVideoX</td>
+            <td>0.485</td><td>0.231</td><td>0.051</td><td>0.569</td>
+            <td>1.748</td><td>0.608</td><td>0.061</td><td>0.486</td>
+          </tr>
+          <tr>
+            <td>Aether</td>
+            <td>0.501</td><td>0.249</td><td>0.054</td><td>0.571</td>
+            <td>1.566</td><td>0.574</td><td>0.067</td><td>0.527</td>
+          </tr>
+          <tr>
+            <td>Open-Sora2.0</td>
+            <td>0.391</td><td>0.196</td><td>0.096</td><td>0.643</td>
+            <td>1.306</td><td>0.445</td><td>0.115</td><td>0.607</td>
+          </tr>
+          <tr>
+            <td><strong>WAN2.1-14B</strong></td>
+            <td><strong>0.284</strong></td><td><strong>0.151</strong></td><td><strong>0.200</strong></td><td><strong>0.736</strong></td>
+            <td><strong>1.051</strong></td><td><strong>0.323</strong></td><td><strong>0.136</strong></td><td><strong>0.660</strong></td>
+          </tr>
+          <tr>
+            <td>Fast3R</td>
+            <td>0.262</td><td>0.145</td><td>0.272</td><td>0.769</td>
+            <td>1.379</td><td>0.514</td><td>0.134</td><td>0.637</td>
+          </tr>
+        </tbody>
+      </table>
+    </div> -->
+
+    <div class="content has-text-left">
+      <h3 class="title is-5" style="margin-top: 2rem;">Main Findings</h3>
+      <ul>
+        <li><strong>Extent: Frontier video diffusion/generation models encode surprisingly strong global 3D structure and ego-motion—often rivaling or surpassing 3D specialists.</strong> Concretely, WAN2.1-14B is close to Fast3R on CO3Dv2, and on the more out-of-domain DL3DV it surpasses Fast3R across point/depth/pose metrics; Open-Sora2.0 is also consistently strong, suggesting top video generators yield broadly transferable 3D-aware features across domains.</li>
+        <!-- <li>Qualitatively, the strongest methods (Fast3R, WAN2.1-14B, Open-Sora2.0) reconstruct thin structures and fine details more faithfully, while weaker baselines show noisy artifacts and inconsistencies; DINOv2 can even fail catastrophically on challenging scenes.</li> -->
+        <li><strong>Factor #1 (Temporal reasoning): Temporal information exchange is critical for global 3D understanding (point-map consistency + pose), not just per-frame depth.</strong> Per-frame DINOv2 remains competitive on depth, but is much worse on global 3D metrics than any video model; even a self-supervised video encoder (V-JEPA) substantially closes that gap, and the advantage of temporal modeling becomes more pronounced on the harder, cluttered DL3DV benchmark.</li>
+        <li><strong>Factor #2 (3D fine-tuning): Fine-tuning a video generator with 3D-aware objectives can improve 3D awareness in-domain, but may hurt generalization across domains.</strong> Aether (3D-aware fine-tuned from CogVideoX) improves over CogVideoX on DL3DV, yet is slightly worse on CO3Dv2—likely reflecting a domain shift because Aether's fine-tuning data is largely large synthetic scenes (games/simulators). The paper frames this as evidence that 3D fine-tuning can help, but avoiding degraded generalization remains open.</li>
+        <li><strong>Factor #3 (Scaling): Scaling does not monotonically increase 3D awareness.</strong> WAN improves a lot when scaling from 1.3B → 14B (notably reducing point-map error), while CogVideoX slightly worsens from 2B → 5B—so parameter count alone isn't a guarantee. The paper hypothesizes training data differences matter (e.g., WAN's scale-up includes additional high-quality/high-resolution data).</li>
+      </ul>
+    </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Qualitative Results (Fig. 3 & 4) -->
+<section class="section" id="qualitative" style="padding-top: 0rem; margin-top: 0rem;">
+  <div class="container is-max-desktop">
+    <div class="hero-body has-text-centered">
+      <h2 class="title is-3">Qualitative Results</h2>
+      <p class="subtitle is-6" style="max-width: 900px; margin: 0 auto;">
+        We visualize reconstructed 3D point maps (unprojected point clouds) from frozen VidFM features using the same shallow probe,
+        alongside representative input frames.
+      </p>
+    </div>
+
+    <!-- Fig 3 -->
+    <div class="content">
+
+      <div id="qualitative-carousel" class="carousel qualitative-carousel" style="max-width: 1100px; margin: 0 auto;">
+        <div class="item item-qual1">
+          <figure class="image">
+            <img src="./static/assets/qual1.png"
+                 alt="Figure 3: CO3Dv2 qualitative results (input frames + unprojected 3D points across models)"
+                 style="width: 100%; border-radius: 12px;">
+          </figure>
+        </div>
+        <div class="item item-qual2">
+          <figure class="image">
+            <img src="./static/assets/qual2.png"
+                 alt="Figure 3: CO3Dv2 qualitative results (input frames + unprojected 3D points across models)"
+                 style="width: 100%; border-radius: 12px;">
+          </figure>
+        </div>
+        <div class="item item-qual3">
+          <figure class="image">
+            <img src="./static/assets/qual3.png"
+                 alt="Figure 3: CO3Dv2 qualitative results (input frames + unprojected 3D points across models)"
+                 style="width: 100%; border-radius: 12px;">
+          </figure>
+        </div>
+        <div class="item item-qual4">
+          <figure class="image">
+            <img src="./static/assets/qual4.png"
+                 alt="Figure 3: CO3Dv2 qualitative results (input frames + unprojected 3D points across models)"
+                 style="width: 100%; border-radius: 12px;">
+          </figure>
+        </div>
+      </div>
+
+      <div class="content has-text-left" style="max-width: 1100px; margin: 1rem auto 0;">
+        <p>
+          The per-frame image baseline (<strong>DINOv2</strong>) can fail catastrophically on difficult scenes,
+          while top video generators often retain coherent geometry. Among them, <strong>WAN2.1-14B</strong> typically produces the
+          sharpest and most accurate point clouds overall. 
+        </p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+
+<!-- Ablations -->
+<section class="section has-background-light" style="padding-top: 0rem; margin-top: 0rem;">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <h2 class="title is-3 has-text-centered">Ablations: Where Is 3D Encoded?</h2>
+
+      <img src="./static/assets/abl.png" alt="Layer–timestep ablations" style="width: 100%; border-radius: 12px;">
+
+      <div style="display: flex; justify-content: space-around; width: 100%; text-align: center;">
+        <span style="flex: 1;">(a) WAN2.1</span>
+        <span style="flex: 1;">(b) Open-Sora2.0</span>
+        <span style="flex: 1;">(c) CogVideoX</span>
+      </div>
+      <br>
+
+      <div class="content has-text-left">
+        <p>
+          For diffusion VidFMs, we sweep feature extraction layers and denoising timesteps, and show point-map error (lower is better).
+          The best 3D-aware features are consistently from <strong>mid network layers</strong> and
+          <strong>early-but-not-first</strong> timesteps, suggesting an optimal trade-off where global structure is present
+          but features are not overly specialized to per-frame RGB synthesis.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- VidFM features for VGGT -->
+<section class="section" style="padding-top: 0rem; margin-top: 0rem;">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <h2 class="title is-3 has-text-centered">VidFM Features Improve Feedforward 3D (VGGT)</h2>
+
+    <div class="content has-text-left">
+      <p>
+        VidFM features aren’t just “diagnostically 3D-aware”, they are also practically useful. We replace the standard DINO-based feature backbone in VGGT with frozen WAN2.1-14B features, and train under a matched compute budget on CO3Dv2 and DL3DV. The VidFM-feature variant improves point/depth/pose metrics substantially, highlighting the advantage of video foundation model features for feedforward 3D reconstruction under limited 3D data.
+      </p>
+    </div>
+
+    <div class="table-container">
+      <table class="table is-striped is-hoverable is-fullwidth">
+        <thead>
+          <tr>
+            <th rowspan="2">Method</th>
+            <th colspan="4" class="has-text-centered">CO3Dv2</th>
+            <th colspan="4" class="has-text-centered">DL3DV</th>
+          </tr>
+          <tr>
+            <th>Point Err (↓)</th>
+            <th>Depth Err (↓)</th>
+            <th>AUC@5 (↑)</th>
+            <th>AUC@30 (↑)</th>
+            <th>Point Err (↓)</th>
+            <th>Depth Err (↓)</th>
+            <th>AUC@5 (↑)</th>
+            <th>AUC@30 (↑)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Original VGGT (DINO)</td>
+            <td>0.476</td><td>0.205</td><td>0.076</td><td>0.565</td>
+            <td>2.751</td><td>0.518</td><td>0.058</td><td>0.363</td>
+          </tr>
+          <tr>
+            <td><strong>VidFM-VGGT (WAN2.1-14B features)</strong></td>
+            <td><strong>0.289</strong></td><td><strong>0.145</strong></td><td><strong>0.178</strong></td><td><strong>0.718</strong></td>
+            <td><strong>1.034</strong></td><td><strong>0.319</strong></td><td><strong>0.183</strong></td><td><strong>0.686</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- BibTeX -->
+<section class="section has-background-light" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <div class="hero-body">
+      <h2 class="title has-text-centered">BibTeX</h2>
+    <pre><code>@article{huang2025vidfm3d,
+  title   = {How Much 3D Do Video Foundation Models Encode?},
+  author  = {Huang, Zixuan and Li, Xiang and Lv, Zhaoyang and Rehg, James M.},
+  journal = {arXiv preprint},
+  year    = {2025}
+  % note = {Update with arXiv ID / venue}
+}</code></pre>
+    </div>
+  </div>
+</section>
+
+
+<footer class="footer">
+  <div class="container">
+    <div class="content has-text-centered">
+      This website template is borrowed from <a href="https://github.com/nerfies/nerfies.github.io">Nerfies</a>.
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

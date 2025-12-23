@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Radar Chart Visualization</title>
+  <!-- Import ECharts -->
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: white;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      padding: 20px;
+    }
+    
+    .chart-title {
+      text-align: center;
+      margin-bottom: 15px;
+      color: #333;
+      font-size: 1.2rem;
+    }
+    
+    #radarChart {
+      height: 600px;
+      width: 100%;
+    }
+    
+    .chart-container {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- <h2 class="chart-title">VideoProbe3D Model Evaluation</h2> -->
+    
+    <div class="chart-container">
+      <div id="radarChart"></div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // ===== DATA DEFINITIONS =====
+      // Metrics: DL3DV-Pose (up), DL3DV-Point (down), CO3D-Point (down), CO3D-Pose (up), CO3D-Depth (down), DL3DV-Depth (down)
+      // Normalized with ERR=0.03: norm = 0.03 + 0.94 * (normalized_value)
+      
+      const indicators = [
+        { name: 'DL3DV\nPose', max: 1 },
+        { name: 'DL3DV\nPoint', max: 1 },
+        { name: 'CO3D\nPoint', max: 1 },
+        { name: 'CO3D\nPose', max: 1 },
+        { name: 'CO3D\nDepth', max: 1 },
+        { name: 'DL3DV\nDepth', max: 1 }
+      ];
+
+      // Normalized data from result-all.csv using plot_radar.py normalization formula
+      // Direction: up for Pose metrics, down for Point/Depth metrics
+      const modelData = {
+        "Aether": [0.6701, 0.6952, 0.2134, 0.2563, 0.03, 0.1566],
+        "CogVideoX": [0.5765, 0.5982, 0.2637, 0.2500, 0.1887, 0.0478],
+        "DINOv2": [0.03, 0.03, 0.03, 0.03, 0.3872, 0.2878],
+        "Fast3R": [0.9181, 0.7951, 0.97, 0.97, 0.97, 0.3511],
+        "Open-Sora2.0": [0.8497, 0.8341, 0.5637, 0.5176, 0.5066, 0.5740],
+        "V-JEPA": [0.7390, 0.6899, 0.4112, 0.4289, 0.3481, 0.03],
+        "WAN2.1-14B": [0.97, 0.97, 0.9015, 0.8495, 0.9084, 0.97],
+        "WAN2.1-1.3B": [0.6766, 0.7575, 0.6291, 0.5291, 0.5073, 0.5385]
+      };
+
+      // Colors for each model - using Seaborn's Set2 palette (same as plot_radar.py)
+      const colors = {
+        "Aether": '#66c2a5',
+        "CogVideoX": '#fc8d62',
+        "DINOv2": '#8da0cb',
+        "Fast3R": '#e78ac3',
+        "Open-Sora2.0": '#a6d854',
+        "V-JEPA": '#ffd92f',
+        "WAN2.1-14B": '#e5c494',
+        "WAN2.1-1.3B": '#b3b3b3'
+      };
+
+      // ===== CHART INITIALIZATION =====
+      const chartDom = document.getElementById('radarChart');
+      const myChart = echarts.init(chartDom, null, {
+        devicePixelRatio: window.devicePixelRatio || 2,
+        renderer: 'canvas'
+      });
+      
+      const option = {
+        grid: {
+          right: '5%',
+          left: '5%',
+          top: '5%',
+          bottom: '20%'
+        },
+        legend: {
+          show: true,
+          orient: 'horizontal',
+          bottom: 5,
+          left: 'center',
+          padding: [10, 10, 10, 10],
+          borderWidth: 0,
+          backgroundColor: 'transparent', 
+          data: Object.keys(modelData),
+          textStyle: {
+            fontSize: 12,
+            fontFamily: 'Arial, sans-serif'
+          },
+          icon: 'circle',
+          itemWidth: 10,
+          itemHeight: 10,
+          itemGap: 15
+        },
+        toolbox: {
+          show: true,
+          right: 10,
+          top: 10,
+          feature: {
+            myTool: {
+              show: true,
+              title: 'Select/Deselect All',
+              icon: 'path://M432.45,595.444c0,2.177-4.661,6.82-11.305,6.82c-6.475,0-11.306-4.567-11.306-6.82s4.852-6.812,11.306-6.812C427.841,588.632,432.452,593.191,432.45,595.444L432.45,595.444z M421.155,589.876c-3.009,0-5.448,2.495-5.448,5.572s2.439,5.572,5.448,5.572c3.01,0,5.449-2.495,5.449-5.572C426.604,592.371,424.165,589.876,421.155,589.876L421.155,589.876z M421.146,591.891c-1.916,0-3.47,1.589-3.47,3.549c0,1.959,1.554,3.548,3.47,3.548s3.469-1.589,3.469-3.548C424.614,593.479,423.062,591.891,421.146,591.891L421.146,591.891zM421.146,591.891',
+              onclick: function() {
+                const allSelected = !Object.values(myChart.getOption().legend[0].selected).every(v => v);
+                const newSelected = {};
+                Object.keys(modelData).forEach(key => {
+                  newSelected[key] = allSelected;
+                });
+                
+                myChart.setOption({
+                  legend: { selected: newSelected }
+                });
+              }
+            },
+            saveAsImage: {
+              title: 'Save as Image',
+              pixelRatio: 3
+            }
+          },
+          itemSize: 12,
+          itemGap: 8,
+          orient: 'horizontal',
+        },
+        tooltip: {
+          trigger: 'item',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderColor: '#ccc',
+          borderWidth: 1,
+          textStyle: {
+            color: '#333',
+            fontFamily: 'Arial, sans-serif'
+          },
+          formatter: function(params) {
+            const modelName = params.name;
+            const values = modelData[modelName];
+            const metricNames = ['DL3DV-Pose', 'DL3DV-Point', 'CO3D-Point', 'CO3D-Pose', 'CO3D-Depth', 'DL3DV-Depth'];
+            
+            let result = `<span style="color: ${colors[modelName]}; font-size: 14px;"><b>${modelName}</b></span><br/>`;
+            
+            metricNames.forEach((metric, index) => {
+              result += `${metric}: ${values[index].toFixed(4)}<br/>`;
+            });
+            
+            return result;
+          }
+        },
+        radar: {
+          indicator: indicators,
+          shape: 'polygon',
+          startAngle: 0,
+          splitNumber: 4,
+          nameGap: 20,
+          center: ['50%', '45%'],
+          radius: '85%',
+          axisName: {
+            fontSize: 13,
+            fontWeight: 'bold',
+            fontFamily: 'Arial, sans-serif',
+            color: '#333'
+          },
+          axisLine: {
+            lineStyle: {
+              type: 'dashed',
+              width: 1.5,
+              color: 'rgba(128, 128, 128, 0.4)'
+            }
+          },
+          splitLine: {
+            lineStyle: {
+              type: 'dashed',
+              width: 1.5,
+              color: 'rgba(128, 128, 128, 0.4)'
+            }
+          },
+          splitArea: {
+            areaStyle: {
+              color: '#f0f0f0',
+              opacity: 0.2
+            }
+          }
+        },
+        series: [{
+          type: 'radar',
+          symbol: 'circle',
+          symbolSize: 6,
+          animation: true,
+          animationDuration: 300,
+          animationEasing: 'cubicOut',
+          z: 2,
+          data: Object.keys(modelData).map(key => ({
+            name: key,
+            value: modelData[key],
+            lineStyle: {
+              color: colors[key],
+              width: 2
+            },
+            areaStyle: {
+              color: colors[key],
+              opacity: 0.08
+            },
+            itemStyle: {
+              color: colors[key],
+              borderWidth: 1
+            },
+            emphasis: {
+              focus: 'series',
+              scale: true,
+              lineStyle: {
+                width: 4,
+              },
+              itemStyle: {
+                borderWidth: 4,
+                color: colors[key],
+              }
+            }
+          }))
+        }]
+      };
+
+      // Apply configuration
+      myChart.setOption(option);
+
+      // ===== EVENT HANDLERS =====
+      // Handle resize
+      const resizeObserver = new ResizeObserver(() => {
+        myChart.resize();
+      });
+
+      resizeObserver.observe(chartDom);
+
+      // Clean up on unload
+      window.addEventListener('unload', () => {
+        resizeObserver.disconnect();
+        myChart.dispose();
+      });
+    });
+  </script>
+</body>
+</html>
