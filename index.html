@@ -86,7 +86,7 @@
             <span class="author-block"><sup>*</sup>Equal contribution</span>
           </div>
 
-          <div class="column has-text-centered" style="margin-top: 1rem;">
+          <div class="column has-text-centered" style="margin-top: 0.2rem;">
             <div class="publication-links">
 
               <!-- Paper PDF -->
@@ -107,9 +107,9 @@
                   <span class="icon"><i class="ai ai-arxiv"></i></span>
                   <span>arXiv</span>
                 </a>
-              </span> -->
+              </span>
 
-              <span>&nbsp;&nbsp;&nbsp;&nbsp;</span>
+              <span>&nbsp;</span>
 
               <!-- Code -->
               <span class="link-block">
@@ -141,28 +141,18 @@
 
 
 <!-- Teaser / TL;DR -->
-<section class="section" style="padding-top: 0rem; margin-top: -1rem;">
+<section class="section" style="padding-top: 0rem; margin-top: -2.5rem;">
   <div class="container is-max-desktop">
-    <div class="hero-body">
+    <div class="hero-body" style="padding-top: 0.5rem; padding-bottom: 1rem;">
 
       <img src="./static/assets/teaser.png" alt="Teaser figure (3D probing of VidFMs)" style="width: 100%; border-radius: 12px;">
-      <br><br>
+      <br>
 
       <div class="content has-text-left">
         <p>
           <strong>TL;DR:</strong>
-          Videos are continuous 2D projections of 3D worlds. We ask: after training on large-scale video data,
-          do video foundation models (VidFMs) naturally encode global 3D structure and ego-motion?
-          We answer this with a <em>model-agnostic probing framework</em> that reads out
-          <strong>3D point maps</strong>, <strong>depth maps</strong>, and <strong>camera poses</strong>
-          from frozen VidFM features using a lightweight feedforward probe.
+          After training on large 2D videos, will video foundation models (VidFMs) naturally encode 3D structure and ego-motion? Our study reveals that state-of-the-art video generators develop strong, generalizable 3D understanding even compared to 3D experts, despite being trained only on 2D video data.
         </p>
-
-        <ul>
-          <li><strong>Probe:</strong> a shallow transformer with alternating attention + 3 readout heads (points, depth, pose).</li>
-          <li><strong>Benchmarked models:</strong> frontier video diffusion models (e.g., WAN2.1, Open-Sora2.0), a self-supervised video model (V-JEPA), and control groups (DINOv2, Fast3R).</li>
-          <li><strong>Key finding:</strong> state-of-the-art video generators develop strong, generalizable 3D understanding, even compared to 3D experts, despite being trained only on 2D video data.</li>
-        </ul>
       </div>
 
     </div>
@@ -191,29 +181,37 @@
 <section class="section" style="padding-top: 0rem; margin-top: 0rem;">
   <div class="container is-max-desktop">
     <div class="hero-body">
-      <h2 class="title is-3 has-text-centered">Approach: Probing 3D Awareness</h2>
+      <h2 class="title is-3 has-text-centered">Feedforward Probe of 3D Awareness</h2>
 
       <img src="./static/assets/probe.png" alt="Probe overview (feature extraction + shallow transformer probe)" style="width: 100%; border-radius: 12px;">
       <br><br>
 
       <div class="content has-text-left">
         <p>
-          <strong>Definition (3D awareness):</strong> how well globally consistent 3D structure and ego-motion can be recovered
-          from a VidFM's <em>frozen</em> feature space using a fixed-capacity, feedforward probe (no VidFM fine-tuning, no per-scene optimization).
+          We design a <em>model-agnostic probing framework</em> that reads out
+          <strong>3D point maps</strong>, <strong>depth maps</strong>, and <strong>camera poses</strong>
+          from frozen VidFM features using a shallow feedforward probe. The probing results quantify how much 3D is encoded in VidFMs' feature space, which we define as 3D awareness.
+        </p>
+
+
+        <p>
+          Specifically, we extract video features using various video foundation models and keep the features frozen. We sample four frames from the original video clip and fetch the corresponding feature maps from the video features. We train the probe by taking these spatial features as input, and task the probe to estimate point maps, depth maps and camera poses. We measure the estimation errors as the main indicators of 3D awareness.
         </p>
 
         <p>
-          <strong>Probe architecture:</strong> We extract per-frame spatial feature maps from a given VidFM.
-          From each clip, we sample <strong>4 frames</strong> (first frame as reference + 3 additional frames).
-          A shallow transformer probe with alternating attention processes these tokens and predicts:
-          (i) dense <strong>3D point maps</strong> in the reference frame coordinate system,
-          (ii) dense <strong>depth maps</strong> at consistent scale across frames,
-          and (iii) relative <strong>camera poses</strong>.
+          <strong>Probe architecture:</strong> a shallow transformer with 4 alternating attentions + 3 readout heads (points, depth, pose).
         </p>
 
         <p>
-          <strong>Datasets:</strong> CO3Dv2 (object-centric) and DL3DV (large, cluttered scenes).
-          We report point-map error, depth error, and pose AUC.
+          <strong>Benchmarked models:</strong> video diffusion models (e.g., WAN2.1, Open-Sora2.0), self-supervised video models (V-JEPA), image models (DINOv2) and 3D experts (Fast3R).
+        </p>
+
+        <p>
+          <strong>Datasets:</strong> CO3Dv2 (objects) and DL3DV (large scenes).
+        </p>
+
+        <p>
+          <strong>Metrics:</strong> point-map error, depth error, and pose AUC at multiple thresholds.
         </p>
       </div>
     </div>
@@ -307,11 +305,10 @@
     <div class="content has-text-left">
       <h3 class="title is-5" style="margin-top: 2rem;">Main Findings</h3>
       <ul>
-        <li><strong>Extent: Frontier video diffusion/generation models encode surprisingly strong global 3D structure and ego-motion—often rivaling or surpassing 3D specialists.</strong> Concretely, WAN2.1-14B is close to Fast3R on CO3Dv2, and on the more out-of-domain DL3DV it surpasses Fast3R across point/depth/pose metrics; Open-Sora2.0 is also consistently strong, suggesting top video generators yield broadly transferable 3D-aware features across domains.</li>
-        <!-- <li>Qualitatively, the strongest methods (Fast3R, WAN2.1-14B, Open-Sora2.0) reconstruct thin structures and fine details more faithfully, while weaker baselines show noisy artifacts and inconsistencies; DINOv2 can even fail catastrophically on challenging scenes.</li> -->
-        <li><strong>Factor #1 (Temporal reasoning): Temporal information exchange is critical for global 3D understanding (point-map consistency + pose), not just per-frame depth.</strong> Per-frame DINOv2 remains competitive on depth, but is much worse on global 3D metrics than any video model; even a self-supervised video encoder (V-JEPA) substantially closes that gap, and the advantage of temporal modeling becomes more pronounced on the harder, cluttered DL3DV benchmark.</li>
-        <li><strong>Factor #2 (3D fine-tuning): Fine-tuning a video generator with 3D-aware objectives can improve 3D awareness in-domain, but may hurt generalization across domains.</strong> Aether (3D-aware fine-tuned from CogVideoX) improves over CogVideoX on DL3DV, yet is slightly worse on CO3Dv2—likely reflecting a domain shift because Aether's fine-tuning data is largely large synthetic scenes (games/simulators). The paper frames this as evidence that 3D fine-tuning can help, but avoiding degraded generalization remains open.</li>
-        <li><strong>Factor #3 (Scaling): Scaling does not monotonically increase 3D awareness.</strong> WAN improves a lot when scaling from 1.3B → 14B (notably reducing point-map error), while CogVideoX slightly worsens from 2B → 5B—so parameter count alone isn't a guarantee. The paper hypothesizes training data differences matter (e.g., WAN's scale-up includes additional high-quality/high-resolution data).</li>
+        <li><strong>Frontier video diffusion/generation models encode surprisingly strong global 3D structure and ego-motion—often rivaling or surpassing 3D specialists.</strong> Concretely, WAN2.1-14B is close to Fast3R on CO3Dv2, and on DL3DV it surpasses Fast3R across point/depth/pose metrics; Open-Sora2.0 is also consistently strong, suggesting top video generators yield broadly transferable 3D-aware features across domains.</li>
+         <li><strong>Effect of temporal reasoning: Temporal information exchange is critical for global 3D understanding such as 3D points and camera poses.</strong> Per-frame DINOv2 remains competitive on depth, but is much worse on global 3D metrics than video models including self-supervised ones like V-JEPA.</li>
+        <li><strong>Effect of 3D fine-tuning: Fine-tuning a video generator with 3D-aware objectives can improve 3D awareness in-domain, but may hurt generalization across domains.</strong> Aether (3D-aware fine-tuned from CogVideoX) improves over CogVideoX on DL3DV, yet is slightly worse on CO3Dv2. This likely relates to that Aether is finetuned mainly with large synthetic scenes (games/simulators).</li>
+        <li><strong>Effect of scaling: Scaling does not monotonically increase 3D awareness.</strong> WAN improves a lot when scaling from 1.3B to 14B, while CogVideoX slightly worsens from 2B to 5B. This shows that parameter count alone isn't a guarantee of 3D awareness, and we hypothesize that training data play a key role here (e.g., WAN's scaling up includes additional high-quality/high-resolution data).</li>
       </ul>
     </div>
 
@@ -322,11 +319,10 @@
 <!-- Qualitative Results (Fig. 3 & 4) -->
 <section class="section" id="qualitative" style="padding-top: 0rem; margin-top: 0rem;">
   <div class="container is-max-desktop">
-    <div class="hero-body has-text-centered">
-      <h2 class="title is-3">Qualitative Results</h2>
-      <p class="subtitle is-6" style="max-width: 900px; margin: 0 auto;">
-        We visualize reconstructed 3D point maps (unprojected point clouds) from frozen VidFM features using the same shallow probe,
-        alongside representative input frames.
+    <div class="hero-body">
+      <h2 class="title is-3 has-text-centered">Qualitative Results</h2>
+      <p class="subtitle is-6 has-text-left" style="max-width: 900px;">
+        We visualize reconstructed 3D point clouds from frozen VidFM features with our shallow probe.
       </p>
     </div>
 
@@ -382,7 +378,7 @@
 <section class="section has-background-light" style="padding-top: 0rem; margin-top: 0rem;">
   <div class="container is-max-desktop">
     <div class="hero-body">
-      <h2 class="title is-3 has-text-centered">Ablations: Where Is 3D Encoded?</h2>
+      <h2 class="title is-3 has-text-centered">Where Is 3D Encoded in Diffusion Models?</h2>
 
       <img src="./static/assets/abl.png" alt="Layer–timestep ablations" style="width: 100%; border-radius: 12px;">
 
@@ -395,10 +391,7 @@
 
       <div class="content has-text-left">
         <p>
-          For diffusion VidFMs, we sweep feature extraction layers and denoising timesteps, and show point-map error (lower is better).
-          The best 3D-aware features are consistently from <strong>mid network layers</strong> and
-          <strong>early-but-not-first</strong> timesteps, suggesting an optimal trade-off where global structure is present
-          but features are not overly specialized to per-frame RGB synthesis.
+          For video generators, we study which diffusion layer and timestep yield the most 3D-aware features by sweeping over three network layers and four denoising timesteps. Across all the models we study, the optimum is consistent: mid-network layers combined with an early-but-not-first time step, are significantly better than other layers and time steps. 
         </p>
       </div>
     </div>
@@ -414,7 +407,7 @@
 
     <div class="content has-text-left">
       <p>
-        VidFM features aren’t just “diagnostically 3D-aware”, they are also practically useful. We replace the standard DINO-based feature backbone in VGGT with frozen WAN2.1-14B features, and train under a matched compute budget on CO3Dv2 and DL3DV. The VidFM-feature variant improves point/depth/pose metrics substantially, highlighting the advantage of video foundation model features for feedforward 3D reconstruction under limited 3D data.
+        VidFM features aren't just “diagnostically 3D-aware”, they are also practically useful, at least when 3D data and compute are limited. We replace the standard DINO-based feature backbone in VGGT with frozen WAN2.1-14B features, and train both models under a matched compute budget on CO3Dv2 and DL3DV. The VidFM-feature variant improves point/depth/pose metrics substantially, highlighting the advantage of video foundation model features for feedforward 3D reconstruction under limited 3D data.
       </p>
     </div>
 
@@ -467,7 +460,7 @@
   author  = {Huang, Zixuan and Li, Xiang and Lv, Zhaoyang and Rehg, James M.},
   journal = {arXiv preprint},
   year    = {2025}
-  % note = {Update with arXiv ID / venue}
+  % note = {xxxx:xxxxx}
 }</code></pre>
     </div>
   </div>
