@@ -258,6 +258,30 @@
 
       resizeObserver.observe(chartDom);
 
+      // Listen for messages from parent window to toggle models
+      window.addEventListener('message', function(event) {
+        if (event.data.type === 'toggleModels') {
+          const modelsToShow = event.data.models;
+          const newSelected = {};
+          
+          // Set all models to false first
+          Object.keys(modelData).forEach(key => {
+            newSelected[key] = false;
+          });
+          
+          // Set selected models to true
+          modelsToShow.forEach(model => {
+            if (modelData[model]) {
+              newSelected[model] = true;
+            }
+          });
+          
+          myChart.setOption({
+            legend: { selected: newSelected }
+          });
+        }
+      });
+
       // Clean up on unload
       window.addEventListener('unload', () => {
         resizeObserver.disconnect();

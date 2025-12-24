@@ -52,6 +52,20 @@
   <script src="./static/js/bulma-carousel.min.js"></script>
   <script src="./static/js/bulma-slider.min.js"></script>
   <script src="./static/js/index.js"></script>
+  <script>
+    function toggleModels(modelNames) {
+      const iframe = document.querySelector('iframe[src="radar_vidfm.html"]');
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({
+          type: 'toggleModels',
+          models: modelNames
+        }, '*');
+        
+        // Scroll to the chart smoothly
+        iframe.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  </script>
 </head>
 
 <body>
@@ -240,6 +254,9 @@
               scrolling="no"
               title="Unified Evaluation of Single-Image 3D Generation Models">
       </iframe>
+      <p class="has-text-centered is-size-7" style="margin-top: 0.5rem; color: #666;">
+        <em>Interactive chart: Click legend items to show/hide models • Hover over lines for detailed metrics • Use toolbar buttons to select/deselect all or save as image</em>
+      </p>
     </div>
 
 <!-- 
@@ -304,11 +321,23 @@
 
     <div class="content has-text-left">
       <h3 class="title is-5" style="margin-top: 2rem;">Main Findings</h3>
-      <ul>
-        <li><strong>Frontier video diffusion/generation models encode surprisingly strong global 3D structure and ego-motion—often rivaling or surpassing 3D specialists.</strong> Concretely, WAN2.1-14B is close to Fast3R on CO3Dv2, and on DL3DV it surpasses Fast3R across point/depth/pose metrics; Open-Sora2.0 is also consistently strong, suggesting top video generators yield broadly transferable 3D-aware features across domains.</li>
-         <li><strong>Effect of temporal reasoning: Temporal information exchange is critical for global 3D understanding such as 3D points and camera poses.</strong> Per-frame DINOv2 remains competitive on depth, but is much worse on global 3D metrics than video models including self-supervised ones like V-JEPA.</li>
-        <li><strong>Effect of 3D fine-tuning: Fine-tuning a video generator with 3D-aware objectives can improve 3D awareness in-domain, but may hurt generalization across domains.</strong> Aether (3D-aware fine-tuned from CogVideoX) improves over CogVideoX on DL3DV, yet is slightly worse on CO3Dv2. This likely relates to that Aether is finetuned mainly with large synthetic scenes (games/simulators).</li>
-        <li><strong>Effect of scaling: Scaling does not monotonically increase 3D awareness.</strong> WAN improves a lot when scaling from 1.3B to 14B, while CogVideoX slightly worsens from 2B to 5B. This shows that parameter count alone isn't a guarantee of 3D awareness, and we hypothesize that training data play a key role here (e.g., WAN's scaling up includes additional high-quality/high-resolution data).</li>
+      <ul style="list-style: none; padding-left: 0;">
+        <li style="margin-bottom: 1.5rem;">
+          <strong>Frontier video diffusion/generation models encode surprisingly strong global 3D structure and ego-motion—often rivaling or surpassing 3D specialists.</strong> Concretely, WAN2.1-14B is close to Fast3R on CO3Dv2, and on DL3DV it surpasses Fast3R across point/depth/pose metrics; Open-Sora2.0 is also consistently strong, suggesting top video generators yield broadly transferable 3D-aware features across domains.
+          <br><button class="button is-small is-link is-light" style="margin-top: 0.5rem;" onclick="toggleModels(['WAN2.1-14B', 'Open-Sora2.0', 'Fast3R'])">📊 Compare: WAN2.1-14B, Open-Sora2.0, Fast3R</button>
+        </li>
+        <li style="margin-bottom: 1.5rem;">
+          <strong>Effect of temporal reasoning: Temporal information exchange is critical for global 3D understanding such as 3D points and camera poses.</strong> Per-frame DINOv2 remains competitive on depth, but is much worse on global 3D metrics than video models including self-supervised ones like V-JEPA.
+          <br><button class="button is-small is-link is-light" style="margin-top: 0.5rem;" onclick="toggleModels(['DINOv2', 'V-JEPA', 'WAN2.1-14B'])">📊 Compare: DINOv2, V-JEPA, WAN2.1-14B</button>
+        </li>
+        <li style="margin-bottom: 1.5rem;">
+          <strong>Effect of 3D fine-tuning: Fine-tuning a video generator with 3D-aware objectives can improve 3D awareness in-domain, but may hurt generalization across domains.</strong> Aether (3D-aware fine-tuned from CogVideoX) improves over CogVideoX on DL3DV, yet is slightly worse on CO3Dv2. This likely relates to that Aether is finetuned mainly with large synthetic scenes (games/simulators).
+          <br><button class="button is-small is-link is-light" style="margin-top: 0.5rem;" onclick="toggleModels(['Aether', 'CogVideoX'])">📊 Compare: Aether vs CogVideoX</button>
+        </li>
+        <li style="margin-bottom: 1.5rem;">
+          <strong>Effect of scaling: Scaling does not monotonically increase 3D awareness.</strong> WAN improves a lot when scaling from 1.3B to 14B, while CogVideoX slightly worsens from 2B to 5B. This shows that parameter count alone isn't a guarantee of 3D awareness, and we hypothesize that training data play a key role here (e.g., WAN's scaling up includes additional high-quality/high-resolution data).
+          <br><button class="button is-small is-link is-light" style="margin-top: 0.5rem;" onclick="toggleModels(['WAN2.1-14B', 'WAN2.1-1.3B'])">📊 Compare: WAN2.1 Scaling</button>
+        </li>
       </ul>
     </div>
 
