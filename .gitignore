@@ -1,2 +1,38 @@
-.DS_store
+.DS_Store
 .idea
+
+# Viser raw scene artifacts (too large for git, regenerate using scripts)
+viser-scenes/raw/
+
+# Internal scripts and workflow documentation (not needed for public website)
+batch_export_viser.py
+viser_view_export.py
+copy_viser_scenes.sh
+convert_camera_params.py
+generate_camera_params.py
+CAMERA_CONFIG.md
+QUICK_SETUP.md
+VISER_WORKFLOW.md
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.mypy_cache/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+.DS_Store
